@@ -1,3 +1,4 @@
+#!/bin/bash -e
 rawdata= #directory with raw fastq data
 datadir= #directory with fastq data
 
@@ -7,8 +8,7 @@ do
 fastqc $file
 done
 
-
-#trim files before alignment- change parameters based on fastqc results
+#trim files before alignment- change parameters based raw file results
 for file in ${rawdata}*_R1_001.fastq.gz
 do
        base=$(basename ${file} _R1_001.fastq.gz)
@@ -21,9 +21,10 @@ done
 wait
 echo "done trimming"
 
+#collect trimming reports into one file
 for file in ${datadir}*.txt
 do
-ls $file >> ${datadir}trimming_reports.txt
+cat $file >> trimming_reports.txt 
 done
 
 
@@ -32,7 +33,4 @@ for file in ${datadir}*.gz
 do
 fastqc $file
 done
-
-#unzip ${fastqc}\*.zip
-#cat ${fastqc}*/summary.txt >> ${fastqc}fastqc_trimmed_summaries.txt 
-#grep FAIL ${fastqc}fastqc_trimmed_summaries.txt >> ${fastqc}fastqc_fails.txt
+#examine fastqc output to determine whether additional trimming is needed
