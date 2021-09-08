@@ -72,10 +72,6 @@ done
 
 #concatenate the chunked vcf files
 bcftools concat --file-list ${bcf_file}list_of_bcf.txt -O b -o ${bcf_file}OFK_VariantCalls_concat.bcf --threads 16 
-wait
-bgzip ${bcf_file}OFK_VariantCalls_concat.bcf
-wait
-bcftools index ${bcf_file}OFK_VariantCalls_concat.bcf.gz
 echo “population bcf file is ready for filtering!”
 
 
