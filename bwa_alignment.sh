@@ -1,30 +1,13 @@
 #!/bin/bash -e
-ref=/data/Tuturuatu/ref_genomes/Maui_TLR.fasta #Reference genome for alignment
-rawdata=/data/Tuturuatu/data/raw_data/
-datadir=/data/Tuturuatu/data/trimmed_galore/ #Directory with fastq data
-samdir=/data/Tuturuatu/tlr_results/sam/ #Sam file output
-bamdir=/data/Tuturuatu/tlr_results/bam/ #Bam file output
-bcf_file=/data/Tuturuatu/tlr_results/bcf/ #bcf file output
+ref= #Reference genome for alignment
+rawdata= #Directory with raw fastq data
+datadir= #Directory with fastq data
+samdir= #Sam file directory
+bamdir= #Bam file directory
+bcf_file= #bcf file directory
 fq1=_val_1.fq.gz #Read 1 suffix
 fq2=_val_2.fq.gz #Read 2 suffix
 platform="Illumina"
-
-#Trim files before alignment
-for file in ${rawdata}*_R1_001.fastq.gz
-do
-	base=$(basename ${file} _R1_001.fastq.gz)
-	/usr/bin/TrimGalore-0.6.6/trim_galore --paired --2colour 20 --basename $base -o ${datadir} $file ${rawdata}${base}_R2_001.fastq.gz
-done
-wait
-echo "done trimming"
-
-for file in ${datadir}*.txt
-do
-ls $file >> trimming_reports.txt
-done
-
-#First index the reference genome
-time bwa index $ref
 
 #Now, retrieving read group and instrument information.
 for samp in ${datadir}*${fq1} #Remember to be explicit with file location
@@ -56,13 +39,14 @@ do
 	rm ${samdir}${base}.sam
 done
 
-#chunk bam files for mpileup
-ls ${bamdir}*aligned.sorted.bam > ${bamdir}OFK_bam_list.txt
-perl /data/SubSampler_SNPcaller/split_bamfiles_tasks.pl -b ${bamdir}OFK_bam_list.txt -g $ref -n 12 -o /data/OFK/tlr_results/chunks | parallel -j 12 {}
+#chunk bam files for mpileup using custom perl script from @Lanilen/SubSampler_SNPcaller
+ls ${bamdir}*aligned.sorted.bam > ${bamdir}bam_list.txt
+perl /data/SubSampler_SNPcaller/split_bamfiles_tasks.pl -b ${bamdir}bam_list.txt -g $ref -n 12 -o ${bamdir}/chunks | parallel -j 12 {}
 
-#run mpileup on chunks of bam files
+
+#run mpileup in parallel on chunks of bam files
 for (( i=1; i<=12; i++ )); do
-        bcftools mpileup -E -O b -f $ref -a AD,ADF,DP,ADR,SP -o ${bcf_file}OFK_${i}_raw.bcf /data/OFK/tlr_results/chunks/${i}/* &
+        bcftools mpileup -E -O b -f $ref -a AD,ADF,DP,ADR,SP -o ${bcf_file}OFK_${i}_raw.bcf ${bamdir}/chunks/${i}/* &
 done
 wait
 echo “mpileup is done running”
@@ -81,14 +65,17 @@ echo “variant calling is complete”
 for file in ${bcf_file}*.vcf
 do
 base=$(basename $file .vcf)
-bcftools reheader -s ${bamdir}OFK_bam_list.txt ${file} -o ${bcf_file}${base}_reheader.vcf
-bgzip ${bcf_file}${base}_reheader.vcf
-bcftools index ${bcf_file}${base}_reheader.vcf.gz
-ls ${bcf_file}${base}_reheader.vcf.gz >> ${bcf_file}list_of_vcf.txt
+bcftools reheader -s ${bamdir}OFK_bam_list.txt ${file} -o ${bcf_file}${base}_reheader.bcf
+wait
+ls ${bcf_file}${base}_reheader.bcf >> ${bcf_file}list_of_bcf.txt
 done
 
 #concatenate the chunked vcf files
-bcftools concat --file-list ${bcf_file}list_of_vcf.txt -O v -o ${bcf_file}OFK_VariantCalls_concat.vcf --threads 16 
-echo “vcf file is ready for filtering!”
+bcftools concat --file-list ${bcf_file}list_of_bcf.txt -O b -o ${bcf_file}OFK_VariantCalls_concat.bcf --threads 16 
+wait
+bgzip ${bcf_file}OFK_VariantCalls_concat.bcf
+wait
+bcftools index ${bcf_file}OFK_VariantCalls_concat.bcf.gz
+echo “population bcf file is ready for filtering!”
 
 
