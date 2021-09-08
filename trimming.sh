@@ -1,4 +1,5 @@
-
+rawdata= #directory with raw fastq data
+datadir= #directory with fastq data
 
 #run Fastqc on raw data files
 for file in ${rawdata}*.gz
