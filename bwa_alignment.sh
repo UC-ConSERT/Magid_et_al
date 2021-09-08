@@ -1,16 +1,16 @@
 #!/bin/bash -e
-ref= #Reference genome for alignment
-rawdata= #Directory with raw fastq data
-datadir= #Directory with fastq data
-samdir= #Sam file directory
-bamdir= #Bam file directory
+ref= #reference genome for alignment
+rawdata= #directory with raw fastq data
+datadir= #directory with fastq data
+samdir= #sam file directory
+bamdir= #bam file directory
 bcf_file= #bcf file directory
 fq1=_val_1.fq.gz #Read 1 suffix
 fq2=_val_2.fq.gz #Read 2 suffix
 platform="Illumina"
 
-#Now, retrieving read group and instrument information.
-for samp in ${datadir}*${fq1} #Remember to be explicit with file location
+#now, retrieving read group and instrument information.
+for samp in ${datadir}*${fq1} #remember to be explicit with file location
 do
         base=$(basename $samp _val_1.fq.gz)
 	infoline=$(zcat ${samp} | head -n 1)
@@ -20,14 +20,14 @@ do
 	lane=`echo $infoline | cut -d ':' -f4`
 	index=`echo $infoline | cut -d ':' -f10`
 
-	#Now to incorporate this information into the alignment
+	#now to incorporate this information into the alignment
 	rgid="ID:${instrument}_${instrumentrun}_${flowcell}_${lane}_${index}"
 	rgpl="PL:${platform}"
 	rgpu="PU:${flowcell}.${lane}"
 	rglb="LB:${base}_library1"
 	rgsm="SM:${base}"
 
-        echo "Aligning reads for $base" #Be explicit with file location for read 2 and the sam file output
+        echo "Aligning reads for $base" #be explicit with file location for read 2 and the sam file output
         time bwa mem -M -R @RG'\t'$rgid'\t'$rgpl'\t'$rgpu'\t'$rglb'\t'$rgsm -t 64 $ref $samp ${datadir}${base}${fq2} > ${samdir}${base}.sam
 	time bwa mem -M -t 64 $ref $samp ${datadir}${base}${fq2} > ${samdir}${base}.sam
 	echo "Converting sam file to bam file for $base" 
