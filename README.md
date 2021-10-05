@@ -12,6 +12,6 @@ All scripts written by @molmagid
 # Files
 [0_blast_tlr_search.sh](https://github.com/molmagid/TLR_Analysis/blob/main/0_blast_tlr_search.sh)
 [1_trimming.sh]
-[2_
+[2_alignment_pipeline.sh](https://github.com/molmagid/TLR_Analysis/blob/15b320d9862f74d9636d6c373cdf5c702a46857a/2_alignment_pipeline.sh)
 
 
