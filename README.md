@@ -11,12 +11,16 @@ All scripts written by @molmagid
 
 # Files
 [0_blast_tlr_search.sh](https://github.com/molmagid/TLR_Analysis/blob/main/0_blast_tlr_search.sh)
-#A script to find TLR sequences within a species' genome, using reference TLR sequences from related species
+A script to find TLR sequences within a species' genome, using reference TLR sequences from related species
+
 [1_trimming.sh](https://github.com/molmagid/TLR_Analysis/blob/main/1_trimming.sh)
-#Script to trim raw fastq files and analyse them with fastqc prior to aligment
+Script to trim raw fastq files and analyse them with fastqc prior to aligment
+
 [2_alignment_pipeline.sh](https://github.com/molmagid/TLR_Analysis/blob/15b320d9862f74d9636d6c373cdf5c702a46857a/2_alignment_pipeline.sh)
-#Script to align trimmed fastq files to species reference genome /t
+Script to align trimmed fastq files to species reference genome /t
+
 [3_filtering.sh](https://github.com/molmagid/TLR_Analysis/blob/main/3_filtering.sh)
-#Script to filter population vcf file /t 
+Script to filter population vcf file /t 
+
 [4_haplotype_creation.sh](https://github.com/molmagid/TLR_Analysis/blob/main/4_haplotype_creation.sh)
-#Script to phase and create haplotypes for all individuals in the population vcf file
+Script to phase and create haplotypes for all individuals in the population vcf file
