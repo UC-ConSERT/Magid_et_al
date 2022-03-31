@@ -1,4 +1,6 @@
 #!/bin/bash -e
+#script for aligning individual samples to species reference genome to create a population dataset
+
 ref= #reference genome for alignment
 rawdata= #directory with raw fastq data
 datadir= #directory with fastq data
@@ -67,12 +69,13 @@ echo “variant calling is complete”
 for file in ${bcf_file}*.vcf
 do
 base=$(basename $file .vcf)
+#reheader each chunked bcf so it has the same sample names
 bcftools reheader -s ${bamdir}OFK_bam_list.txt ${file} -o ${bcf_file}${base}_reheader.bcf
 wait
-ls ${bcf_file}${base}_reheader.bcf >> ${bcf_file}list_of_bcf.txt
+ls ${bcf_file}${base}_reheader.bcf >> ${bcf_file}list_of_bcf.txt #bcf files names put into a list
 done
 
-#concatenate the chunked vcf files
+#concatenate the chunked bcf files into a whole population bcf
 bcftools concat --file-list ${bcf_file}list_of_bcf.txt -O b -o ${bcf_file}OFK_VariantCalls_concat.bcf --threads 16 
 echo “population bcf file is ready for filtering!”
 
