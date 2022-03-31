@@ -12,7 +12,8 @@ platform="Illumina"
 #now, retrieving read group and instrument information.
 for samp in ${datadir}*${fq1} #remember to be explicit with file location
 do
-        base=$(basename $samp _val_1.fq.gz)
+        #extract sample information from fastq name
+	base=$(basename $samp _val_1.fq.gz)
 	infoline=$(zcat ${samp} | head -n 1)
 	instrument=`echo ${infoline} | cut -d ':' -f1`
 	instrumentrun=`echo $infoline | cut -d ':' -f2`
@@ -20,17 +21,17 @@ do
 	lane=`echo $infoline | cut -d ':' -f4`
 	index=`echo $infoline | cut -d ':' -f10`
 
-	#now to incorporate this information into the alignment
+	#now to incorporate sample information into the alignment
 	rgid="ID:${instrument}_${instrumentrun}_${flowcell}_${lane}_${index}"
 	rgpl="PL:${platform}"
 	rgpu="PU:${flowcell}.${lane}"
 	rglb="LB:${base}_library1"
 	rgsm="SM:${base}"
 
-        echo "Aligning reads for $base" #be explicit with file location for read 2 and the sam file output
+        echo "Aligning reads for $base" #align paired sample reads with ref genome using bwa v 0.7.17
         time bwa mem -M -R @RG'\t'$rgid'\t'$rgpl'\t'$rgpu'\t'$rglb'\t'$rgsm -t 64 $ref $samp ${datadir}${base}${fq2} > ${samdir}${base}.sam
 	time bwa mem -M -t 64 $ref $samp ${datadir}${base}${fq2} > ${samdir}${base}.sam
-	echo "Converting sam file to bam file for $base" 
+	echo "Converting sam file to bam file for $base" #convert sam file to bam file with SAMtools v 1.10
 	time samtools view -@ 16 -T $ref -b ${samdir}${base}.sam > ${bamdir}${base}.bam
 
 	echo "Aligning and indexing file"
@@ -39,12 +40,13 @@ do
 	rm ${samdir}${base}.sam
 done
 
-#chunk bam files for mpileup using custom perl script from @Lanilen/SubSampler_SNPcaller
+#chunk bam files into 12 using custom perl script @Lanilen/SubSampler_SNPcaller/split_bamfiles_tasks.pl
+#chunked files will help mpileup run faster
 ls ${bamdir}*aligned.sorted.bam > ${bamdir}bam_list.txt
 perl /data/SubSampler_SNPcaller/split_bamfiles_tasks.pl -b ${bamdir}bam_list.txt -g $ref -n 12 -o ${bamdir}/chunks | parallel -j 12 {}
 
 
-#run mpileup in parallel on chunks of bam files
+#run mpileup in parallel on chunks of bam files with BCFtools v 1.11
 for (( i=1; i<=12; i++ )); do
         bcftools mpileup -E -O b -f $ref -a AD,ADF,DP,ADR,SP -o ${bcf_file}OFK_${i}_raw.bcf ${bamdir}/chunks/${i}/* &
 done
