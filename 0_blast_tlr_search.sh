@@ -1,4 +1,8 @@
 #!/bin/sh -e
+#script for using reference species TLR sequences sourced from NCBI 
+#to search within the genome of a species of interest
+#uses BLAST+ version 2.2.18
+
 
 #make blast database for reference genome
 makeblastdb -dbtype nucl species_genome.fasta
