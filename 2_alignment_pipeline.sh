@@ -2,8 +2,7 @@
 #script for aligning individual samples to species reference genome to create a population dataset
 
 ref= #reference genome for alignment
-rawdata= #directory with raw fastq data
-datadir= #directory with fastq data
+datadir= #directory with trimmed fastq data
 samdir= #sam file directory
 bamdir= #bam file directory
 bcf_file= #bcf file directory
@@ -36,26 +35,27 @@ do
 	echo "Converting sam file to bam file for $base" #convert sam file to bam file with SAMtools v 1.10
 	time samtools view -@ 16 -T $ref -b ${samdir}${base}.sam > ${bamdir}${base}.bam
 
-	echo "Aligning and indexing file"
-	samtools sort -@ 16 -o ${bamdir}${base}.aligned.sorted.bam ${bamdir}${base}.bam
-	samtools index -@ 16 -b ${bamdir}${base}.aligned.sorted.bam	
-	rm ${samdir}${base}.sam
+	echo "Sorting and indexing file"
+	samtools sort -@ 16 -o ${bamdir}${base}.aligned.sorted.bam ${bamdir}${base}.bam #sorting file with samtools
+	samtools index -@ 16 -b ${bamdir}${base}.aligned.sorted.bam #indexing file with samtools	
+	rm ${samdir}${base}.sam #remove intermediate samtools file
 done
 
-#chunk bam files into 12 using custom perl script @Lanilen/SubSampler_SNPcaller/split_bamfiles_tasks.pl
+#chunk bam files into 12 pieces using custom perl script 
+#@Lanilen/SubSampler_SNPcaller/split_bamfiles_tasks.pl
 #chunked files will help mpileup run faster
 ls ${bamdir}*aligned.sorted.bam > ${bamdir}bam_list.txt
 perl /data/SubSampler_SNPcaller/split_bamfiles_tasks.pl -b ${bamdir}bam_list.txt -g $ref -n 12 -o ${bamdir}/chunks | parallel -j 12 {}
 
 
-#run mpileup in parallel on chunks of bam files with BCFtools v 1.11
+#run bcftools mpileup in parallel on chunks of bam files with BCFtools v 1.11
 for (( i=1; i<=12; i++ )); do
         bcftools mpileup -E -O b -f $ref -a AD,ADF,DP,ADR,SP -o ${bcf_file}OFK_${i}_raw.bcf ${bamdir}/chunks/${i}/* &
 done
 wait
 echo “mpileup is done running”
 
-#variant calling on bcf files
+#SNP calling on bcf files with bcftools call
 for file in ${bcf_file}*.bcf
 do
 base=$(basename $file .bcf)
@@ -72,7 +72,8 @@ base=$(basename $file .vcf)
 #reheader each chunked bcf so it has the same sample names
 bcftools reheader -s ${bamdir}OFK_bam_list.txt ${file} -o ${bcf_file}${base}_reheader.bcf
 wait
-ls ${bcf_file}${base}_reheader.bcf >> ${bcf_file}list_of_bcf.txt #bcf files names put into a list
+#put bcf files names into a list for concatenation
+ls ${bcf_file}${base}_reheader.bcf >> ${bcf_file}list_of_bcf.txt 
 done
 
 #concatenate the chunked bcf files into a whole population bcf
