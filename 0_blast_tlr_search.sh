@@ -1,6 +1,6 @@
 #!/bin/sh -e
-#script for using reference species TLR sequences sourced from NCBI 
-#to search within the genome of a species of interest
+#script for align reference species TLR sequences sourced from NCBI 
+#to search within the reference genome of a species of interest
 #uses BLAST+ version 2.2.18
 
 
