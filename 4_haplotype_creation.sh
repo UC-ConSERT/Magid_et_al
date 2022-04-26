@@ -11,7 +11,7 @@ samtools faidx ref_genome.fa '#tlr_region chr:start-end'| bcftools consensus pha
 counter=1 #counter adds unique number labels to each individual for MEGA format
 echo "#MEGA" > tlr_haplotypes.meg
 #for loop to output haplotypes for each individual bam file within the final vcf for one TLR region
-for file in final_bams/*_merged.aligned.sorted.bam #loop through the bam files
+for file in final_bams/*_merged.aligned.sorted.bam #loop through the population bam files
 do
 base=$(basename $file _merged.aligned.sorted.bam)
 echo "#"${counter}"-1" >> tlr_haplotypes.meg
