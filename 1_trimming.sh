@@ -1,4 +1,6 @@
 #!/bin/bash -e
+# Script for trimming and processing 'tchuriwat/tūturuatu raw reads
+
 rawdata= #directory with raw fastq data
 datadir= #directory with fastq data
 
