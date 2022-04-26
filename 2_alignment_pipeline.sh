@@ -37,7 +37,7 @@ do
 
 	echo "Sorting and indexing file"
 	samtools sort -@ 16 -o ${bamdir}${base}.aligned.sorted.bam ${bamdir}${base}.bam #sorting file with samtools
-	samtools index -@ 16 -b ${bamdir}${base}.aligned.sorted.bam #indexing file with samtools	
+	samtools index -b ${bamdir}${base}.aligned.sorted.bam #indexing file with samtools	
 	rm ${samdir}${base}.sam #remove intermediate samtools file
 done
 
